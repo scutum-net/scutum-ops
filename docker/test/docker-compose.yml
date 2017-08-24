@@ -1,0 +1,89 @@
+# This docker-compose file starts up all the Dockerized portions of the product.
+#
+# To start up all of the services in the background:
+#   docker-compose up -d
+#
+# To update your Docker images to the latest and restart the services:
+#   docker-compose pull
+version: '2'
+
+services:
+  # Base infrastructure services
+  scutum-redis:
+    container_name: "scutum-redis"
+    image: "redis:2.8"
+    ports:
+      - "6379:6379"
+    networks:
+      - scutumnet
+    restart: unless-stopped
+
+  scutum-dbinstance:
+    container_name: "scutum-postgres"
+    image: "postgres:9.4"
+    ports:
+      - "5432:5432"
+    networks:
+      - scutumnet
+    restart: unless-stopped
+
+  scutum-elasticsearch:
+    container_name: "scutum-elasticsearch"
+    image: "elasticsearch:2.4.3"
+    ports:
+     - "9200:9200"
+     - "9300:9300"
+    networks:
+      - scutumnet
+    restart: unless-stopped
+
+  scutum-zk:
+    image: "confluentinc/cp-zookeeper:3.2.1"
+    container_name: "scutum-zookeeper"
+    ports:
+      - "2181:2181"
+    networks:
+      - scutumnet
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+
+  scutum-grafana:
+      container_name: "scutum-grafana"
+      image: "grafana/grafana"
+      ports:
+        - 3000:3000
+      volumes:
+        - ./grafana-data:/var/lib/grafana
+
+  scutum-kafka:
+    image: "confluentinc/cp-kafka:3.2.1"
+    container_name: "scutum-kafka"
+    ports:
+      - "9092:9092"
+    networks:
+      - scutumnet
+    restart: unless-stopped
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: 'scutum-zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
+      KAFKA_BROKER_ID: 2
+
+  scutum-ingest:
+        build: ingest/
+        container_name: "scutum-ingest"
+        links:
+          - scutum-kafka
+        ports:
+          - "8080:8080"
+        networks:
+          - scutumnet
+        depends_on:
+          - scutum-kafka
+
+networks:
+  # The network over which all Docker services will communicate
+  scutumnet:
+    driver: bridge
