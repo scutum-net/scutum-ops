@@ -57,8 +57,6 @@ services:
         - 3000:3000
       volumes:
         - ./grafana-data:/var/lib/grafana
-      depends_on:
-        - scutum-elasticsearch
 
   scutum-kafka:
     image: "confluentinc/cp-kafka:3.2.1"
@@ -72,18 +70,21 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'scutum-zookeeper:2181'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
       KAFKA_BROKER_ID: 2
-
   scutum-ingest:
-        build: ingest/
-        container_name: "scutum-ingest"
-        links:
-          - scutum-kafka
+          build: ingest/
+          container_name: "scutum-ingest"
+          ports:
+            - "8080:8080"
+          networks:
+            - scutumnet
+
+  scutum-processor:
+        build: processor/
+        container_name: "scutum-processor"
         ports:
-          - "8080:8080"
+          - "8088:8088"
         networks:
           - scutumnet
-        depends_on:
-          - scutum-kafka
 
 networks:
   # The network over which all Docker services will communicate
