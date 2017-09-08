@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     environment:
       KAFKA_ZOOKEEPER_CONNECT: 'scutum-zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://scutum-kafka:9092'
       KAFKA_BROKER_ID: 2
   scutum-ingest:
           build: ingest/
