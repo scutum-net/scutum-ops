@@ -57,6 +57,9 @@ services:
         - 3000:3000
       volumes:
         - ./grafana-data:/var/lib/grafana
+      networks:
+        - scutumnet
+      restart: unless-stopped
 
   scutum-kafka:
     image: "confluentinc/cp-kafka:3.2.1"
